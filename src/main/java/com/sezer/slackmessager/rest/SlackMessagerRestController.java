@@ -29,6 +29,11 @@ public class SlackMessagerRestController {
         return "OK!";
     }
 
+    @GetMapping("/token")
+    public String getToken() {
+        return FirebaseService.getDeviceToken();
+    }
+
     @GetMapping("/authKey/{token}")
     public String setAuthKey(@PathVariable("token") String token) {
         FirebaseService.setAuthKeyFcm(token);
@@ -36,26 +41,39 @@ public class SlackMessagerRestController {
         return "OK!";
     }
 
-    @GetMapping("/token")
-    public String getToken() {
-        return FirebaseService.getDeviceToken();
-    }
-
     @GetMapping("/authKey")
     public String getAuthKey() {
         return FirebaseService.getAuthKey();
     }
 
+    @GetMapping("/slackToken/{token}")
+    public String setSlackToken(@PathVariable("token") String token) {
+        SlackRTM.setSlackToken(token);
+
+        return "OK!";
+    }
+
+    @GetMapping("/slackToken")
+    public String getSlackToken() {
+        return SlackRTM.getSlackToken();
+    }
+
     @PostMapping(value="/sms", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public String sms(@RequestBody String smsMessage) {
 
-        String message = new JSONObject(smsMessage).getString("message");
+        String channel = "CKK9UJT09";
+        JSONObject requestBody = new JSONObject(smsMessage);
+        String message = requestBody.getString("message");
+        if (requestBody.has("channel")){
+            channel = requestBody.getString("channel");
+        }
+
         JSONObject sendMessageJSON = new JSONObject();
         try {
             /** Constructs the JSON object to send Slack RTM API*/
             sendMessageJSON.put("id", System.currentTimeMillis());
             sendMessageJSON.put("type", "message");
-            sendMessageJSON.put("channel", "CKK9UJT09");
+            sendMessageJSON.put("channel", channel);
             sendMessageJSON.put("text", message);
         } catch (JSONException e) {
             logger.severe("Error on building slack JSON: " + e.getMessage());

@@ -28,12 +28,14 @@ public class SlackRTM {
     /** Websocket URL to be connect */
     private static String wsURL;
 
+    private static String slackToken = "xoxb-507116504512-659844106642-Av1LeR7MKw9hIpOb84qaKjni";
+
+    private static String slackURL = "https://slack.com/api/rtm.connect?token=" + slackToken;
+
     /** Sends initial REST request to connect Slack RTM API */
     public static void rtmConnect(){
-        final String uri = "https://slack.com/api/rtm.connect?token=xoxb-507116504512-659844106642-Av1LeR7MKw9hIpOb84qaKjni";
-
         RestTemplate restTemplate = new RestTemplate();
-        String result = restTemplate.getForObject(uri, String.class);
+        String result = restTemplate.getForObject(slackURL, String.class);
         logger.info(result);
 
         JSONObject json = new JSONObject(result);
@@ -87,5 +89,13 @@ public class SlackRTM {
         }
 
         SlackRTM.sendToSocket(sendPingJSON.toString());
+    }
+
+    public static String getSlackToken(){
+        return slackToken;
+    }
+
+    public static void setSlackToken(String token){
+        slackToken = token;
     }
 }
