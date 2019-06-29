@@ -1,6 +1,7 @@
 package com.sezer.slackmessager.rest;
 
 
+import com.sezer.slackmessager.SMSMessageStore;
 import com.sezer.slackmessager.firebase.FirebaseService;
 import com.sezer.slackmessager.websocket.SlackRTM;
 import org.json.JSONException;
@@ -16,7 +17,7 @@ public class SlackMessagerRestController {
 
     private static Logger logger = Logger.getLogger(SlackMessagerRestController.class.getName());
 
-    @GetMapping("/hola")
+    @GetMapping("/")
     public String hola() {
         return "Hola a todos!";
     }
@@ -40,16 +41,22 @@ public class SlackMessagerRestController {
         return FirebaseService.getDeviceToken();
     }
 
+    @GetMapping("/authKey")
+    public String getAuthKey() {
+        return FirebaseService.getAuthKey();
+    }
+
     @PostMapping(value="/sms", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public String sms(@RequestBody String smsMessage) {
 
+        String message = new JSONObject(smsMessage).getString("message");
         JSONObject sendMessageJSON = new JSONObject();
         try {
             /** Constructs the JSON object to send Slack RTM API*/
             sendMessageJSON.put("id", System.currentTimeMillis());
             sendMessageJSON.put("type", "message");
             sendMessageJSON.put("channel", "CKK9UJT09");
-            sendMessageJSON.put("text", new JSONObject(smsMessage).getString("message"));
+            sendMessageJSON.put("text", message);
         } catch (JSONException e) {
             logger.severe("Error on building slack JSON: " + e.getMessage());
             return "NOT OK!";
@@ -57,6 +64,7 @@ public class SlackMessagerRestController {
 
         /** Send SMS message to Slack RTM API via websocket */
         SlackRTM.sendToSocket(sendMessageJSON.toString());
+        SMSMessageStore.addMessage(message);
 
         return "OK!";
     }
@@ -72,5 +80,10 @@ public class SlackMessagerRestController {
         SlackRTM.reconnect();
 
         return "OK!";
+    }
+
+    @GetMapping("/messages")
+    public String getMessages() {
+        return SMSMessageStore.getMessagesAsString();
     }
 }
