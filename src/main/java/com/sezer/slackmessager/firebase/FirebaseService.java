@@ -40,6 +40,7 @@ public class FirebaseService {
     public static String getDeviceToken(){
         return deviceToken;
     }
+
     public static String getAuthKey(){
         return authKeyFcm;
     }

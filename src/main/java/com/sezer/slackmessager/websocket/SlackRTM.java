@@ -3,14 +3,21 @@ package com.sezer.slackmessager.websocket;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class SlackRTM {
 
     private static final Logger logger = Logger.getLogger(SlackRTM.class.getName());
+
+    private static ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor();
 
     /** Websocket client */
     private static OkHttpClient client;
@@ -32,6 +39,7 @@ public class SlackRTM {
         JSONObject json = new JSONObject(result);
         wsURL = (String) json.get("url");
         connect();
+        startPing();
     }
 
     /** Opens a connection to Slack RTM API via websocket */
@@ -59,5 +67,25 @@ public class SlackRTM {
     public static void reconnect(){
         webSocket.close(0, "closed");
         rtmConnect();
+    }
+
+    private static void startPing(){
+        scheduler.scheduleAtFixedRate
+                (() -> sendPing(), 0, 10, TimeUnit.SECONDS);
+    }
+
+    public static void sendPing(){
+
+        logger.info("Sending ping through websocket...");
+        JSONObject sendPingJSON = new JSONObject();
+        /** Constructs the JSON object to send Slack RTM API*/
+        try {
+            sendPingJSON.put("id", System.currentTimeMillis());
+            sendPingJSON.put("type", "ping");
+        } catch (JSONException e) {
+            logger.severe("Error on constructing ping JSON: " + e.getMessage());
+        }
+
+        SlackRTM.sendToSocket(sendPingJSON.toString());
     }
 }
