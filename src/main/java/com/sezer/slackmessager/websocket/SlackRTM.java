@@ -1,5 +1,6 @@
 package com.sezer.slackmessager.websocket;
 
+import com.sezer.slackmessager.SlackmessagerApplication;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -12,6 +13,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+/**
+ * @author ovuncsezer
+ *
+ * Handles connection operations with Slack RTM API
+ */
 public class SlackRTM {
 
     private static final Logger logger = Logger.getLogger(SlackRTM.class.getName());
@@ -27,17 +33,19 @@ public class SlackRTM {
     private static WebSocket webSocket;
     /** Websocket URL to be connect */
     private static String wsURL;
-
-    private static String slackToken = "xoxb-507116504512-659844106642-Av1LeR7MKw9hIpOb84qaKjni";
-
-    private static String slackURL = "https://slack.com/api/rtm.connect?token=" + slackToken;
+    /** Slack token used to authenticate request */
+    private static String slackToken = SlackmessagerApplication.getPropertyValue("slackToken");
+    /** URL of the Slack RTM API for initial connection */
+    private static String slackURL = SlackmessagerApplication.getPropertyValue("slackURL") + slackToken;
 
     /** Sends initial REST request to connect Slack RTM API */
     public static void rtmConnect(){
         RestTemplate restTemplate = new RestTemplate();
+        /** Sends initial connect request to RTM API */
         String result = restTemplate.getForObject(slackURL, String.class);
         logger.info(result);
 
+        /** Parses web socket URL from the response of the initial connection request */
         JSONObject json = new JSONObject(result);
         wsURL = (String) json.get("url");
         connect();
@@ -71,11 +79,13 @@ public class SlackRTM {
         rtmConnect();
     }
 
+    /** Sends ping within a thread each 10 seconds to Slack RTM API */
     private static void startPing(){
         scheduler.scheduleAtFixedRate
                 (() -> sendPing(), 0, 10, TimeUnit.SECONDS);
     }
 
+    /** Sends ping request to Slack RTM API */
     public static void sendPing(){
 
         logger.info("Sending ping through websocket...");

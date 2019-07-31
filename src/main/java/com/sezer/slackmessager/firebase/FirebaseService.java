@@ -1,5 +1,6 @@
 package com.sezer.slackmessager.firebase;
 
+import com.sezer.slackmessager.SlackmessagerApplication;
 import com.sezer.slackmessager.rest.SlackMessagerRestController;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -8,21 +9,32 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.logging.Logger;
 
+/**
+ * @author ovuncsezer
+ *
+ * Class handles Firebase operations.
+ *
+ * Sends push notifications to the Android device and
+ * stores necessary information regarding notificaion operations
+ */
 public class FirebaseService {
 
     private static Logger logger = Logger.getLogger(SlackMessagerRestController.class.getName());
 
-    private static String authKeyFcm = "AAAAfDbNb8w:APA91bGQevkUa18jVfZzN0ZrJNd3obTpOSlXSGHWbSCK5FNg" +
-            "295BRohfcjvIvY82Nt5rTz5n6MULWZ0BnUA-wX2UJeoDUcYAaudceuaWzly0rwJo3X6UHka8AmzHjSKiEAHnIxy0YfAj";
+    /** Firebase Authorization token */
+    private static String authKeyFcm = SlackmessagerApplication.getPropertyValue("authKeyFcm");
+    /** Token of the Android device */
+    private static String deviceToken = SlackmessagerApplication.getPropertyValue("deviceToken");
 
-    private static String deviceToken = "dKUqPezntKA:APA91bGGCdaMp-j5FG3Snc53kGhZCKO2LU4BRTgKL2MsVyzdQQ7HSsfR9-" +
-            "lVE9PR4I8qwCMXjSlToZ3tSRoQmDIFcyFJ8ACp7yYFrgnJ1KmMwfbzNNSJF2YlXMAxoQTydABx1UezmkP7";
 
-
+    /**
+     * Sends the push notification to device with the message given
+     * @param message Message is the Slack message read through Slack RTM.
+     */
     public static void sendPushNotification(String message){
 
         logger.info("Sending push notification...");
-        final String uri = "https://fcm.googleapis.com/fcm/send";
+        final String uri = SlackmessagerApplication.getPropertyValue("firebase_uri");
         String requestJson =   "{\"data\": {\"message\": \"" + message + "\"}," +
                 "\"registration_ids\": [\"" + deviceToken + "\"]}";
 
@@ -33,6 +45,7 @@ public class FirebaseService {
 
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+        /** Sends POST request to firebase server in order to send notification */
         String result = restTemplate.postForObject(uri, entity, String.class);
         logger.info(result);
     }

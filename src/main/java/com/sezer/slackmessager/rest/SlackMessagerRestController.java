@@ -2,6 +2,7 @@ package com.sezer.slackmessager.rest;
 
 
 import com.sezer.slackmessager.SMSMessageStore;
+import com.sezer.slackmessager.SlackmessagerApplication;
 import com.sezer.slackmessager.firebase.FirebaseService;
 import com.sezer.slackmessager.websocket.SlackRTM;
 import org.json.JSONException;
@@ -61,13 +62,15 @@ public class SlackMessagerRestController {
     @PostMapping(value="/sms", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public String sms(@RequestBody String smsMessage) {
 
-        String channel = "CKK9UJT09";
+        String channel = SlackmessagerApplication.getPropertyValue("slack_channel_id");
+        /** Parses request to get message sent by SMS */
         JSONObject requestBody = new JSONObject(smsMessage);
         String message = requestBody.getString("message");
         if (requestBody.has("channel")){
             channel = requestBody.getString("channel");
         }
 
+        /** Constructs JSON Object to send Slack through RTM API */
         JSONObject sendMessageJSON = new JSONObject();
         try {
             /** Constructs the JSON object to send Slack RTM API*/
